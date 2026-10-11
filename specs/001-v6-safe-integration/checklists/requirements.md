@@ -6,6 +6,9 @@
 - [x] Paid-action uncertainty and duplicate prevention have explicit outcomes.
 - [x] Prepared, observed, complete, and listened-to states are distinct.
 - [x] Service access, download provenance, license, and dependencies are release gates.
+- [x] All legacy internal-API reads are included in the first-release disablement and service-access disposition.
+- [x] Requested versus actual model, Variety, Max Mode, and cost evidence are distinct.
+- [x] Submission, per-output provider status, and listening review are independent.
 - [x] Requirements map to ordered tasks and measurable success criteria.
 - [ ] Current V6 form and limits have been observed and recorded.
 - [ ] Service-access disposition has been resolved.
