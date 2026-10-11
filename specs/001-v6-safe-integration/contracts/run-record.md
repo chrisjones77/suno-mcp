@@ -12,6 +12,8 @@ Required fields: `schemaVersion`, `packageId`, `sourceRevision`, `sourceSha256`,
 
 Store `observedModel`, `modelObservedAt`, and `modelObservationSource` separately from `requestedModel`. `controlObservations` records each applicable control's actual value or `unknown`, observation time/source, and whether it was set, cleared, absent, or unresolved. Record `observedAttachments` and their absence/source/time, plus `expectedCreditCost` with its source. This includes Variety, Max Mode, and any currently applicable advanced controls; do not silently inherit previous form state. A newly encountered control missing from the inventory makes the package stale. The actual observations must match approved intents, and unsupported attachments must be absent, before marking inputs verified or before any future paid automation. Recording a manual observation does not make it an automated attestation.
 
+An input-verified manual handoff stores an immutable `preSubmitSnapshotId`, `preSubmitObservedAt`, and later `createClickedAt` reported by the operator. All model/control/attachment observations in that snapshot must precede the click and refer to the same package revision and inventory version. A form or package change after observation invalidates the snapshot; a post-click observation cannot retroactively verify submitted inputs. If no trustworthy click time or snapshot exists, the run remains unverified.
+
 ## Independent state axes
 
 | Axis | Values | Meaning |
@@ -20,7 +22,7 @@ Store `observedModel`, `modelObservedAt`, and `modelObservationSource` separatel
 | `outputs[].providerState` | `unknown`, `pending`, `streaming`, `complete`, `failed` | Status of each identified output. Only `complete` is terminal success; status is not inferred from a link or audio review. |
 | `outputs[].reviewState` | `unreviewed`, `reviewed` | Whether that specific output was listened to and assessed. This never replaces provider state. |
 
-Each output has `id`, `url`, `identityObservationSource`, `identityObservedAt`, `providerState`, `reviewState`, and optional `reviewer`, `reviewedAt`, and `observations`. A manually entered ID/link is explicitly an operator observation; it is not proof that the output came from the prepared package. Record the association basis and leave it uncertain if it cannot be established.
+Each output has `id`, `url`, `identityObservationSource`, `identityObservedAt`, `providerState`, `providerStateObservedAt`, `providerStateSource`, `reviewState`, and optional `reviewer`, `reviewedAt`, and `observations`. Preserve a timestamped provider-state history rather than overwriting the only observation. A manually entered ID/link is explicitly an operator observation; it is not proof that the output came from the prepared package. Record the association basis and leave it uncertain if it cannot be established.
 
 An authorized automation adapter may add `confirmedSubmittedModel`, `confirmedInputHash`, `creditBefore`, `creditAfter`, and `providerJobIds`. No submission with an empty confirmed ID list may be called generation success. `streaming` remains nonterminal even if playable audio exists.
 
