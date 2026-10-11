@@ -2,13 +2,15 @@
 
 ## Prepared package
 
-Required fields: `schemaVersion`, `packageId`, `sourceRevision`, `sourceSha256`, `createdAt`, `title`, `lyrics`, `style`, `instrumental`, `requestedModel`, `modelCatalogSource`, `mode`, `varietyIntent`, `maxModeIntent`, and `status: prepared`. Preserve exact strings; never include browser tokens, cookies, or full raw provider responses. The source hash covers a documented canonical serialization of all reviewed input fields so a field change invalidates approval.
+Required fields: `schemaVersion`, `packageId`, `sourceRevision`, `sourceSha256`, `createdAt`, `intentType`, `mode`, `title`, `instrumental`, `requestedModel`, `modelCatalogSource`, `controlInventoryVersion`, `controlIntents`, `attachmentIntent`, and `status: prepared`. `finished-lyrics` additionally requires exact `lyrics` and `style` fields; `description` additionally requires a nonempty `description` field. Preserve exact strings; never include browser tokens, cookies, or full raw provider responses. The source hash covers a documented canonical serialization of all reviewed input fields, control intents, and inventory version so a change invalidates approval.
 
-`requestedModel` is a currently documented V6 family choice, or `unresolved`. `modelCatalogSource` identifies the dated documentation used to offer that choice; it does not prove what was selected in Suno. `varietyIntent` and `maxModeIntent` record what the creator wants (normally zero and off for exact style control), not an assumption about the live form. An unresolved setting can be copied but cannot be described as input-verified. A source or field edit creates a new package revision and invalidates prior approval.
+`intentType` is `finished-lyrics` or `description`. `finished-lyrics` requires `mode: custom` and the complete text in `lyrics`; reject `mode: simple`. `description` requires `mode: simple` and its prompt in `description`, with no supplied `lyrics`; it does not claim lyric preservation. The first-release acceptance path is `finished-lyrics`; description-led handoff remains unverified until separately checked against the V6 form. `requestedModel` is a currently documented V6 family choice, or `unresolved`. `modelCatalogSource` identifies the dated documentation used to offer that choice; it does not prove what was selected in Suno.
+
+`controlIntents` is keyed by the versioned inventory of applicable Create controls. Each entry records the intended value or an explicit `unresolved` disposition, including Variety and Max Mode when present. The first release uses `attachmentIntent: none`; unrepresented attachments are unsupported. An unresolved setting can be copied but cannot be described as input-verified. A source, field, or inventory edit creates a new package revision and invalidates prior approval.
 
 ## Handoff observations
 
-Store `observedModel`, `modelObservedAt`, and `modelObservationSource` separately from `requestedModel`. Similarly store actual `observedVariety`, `observedMaxMode`, their observation times/sources, and `expectedCreditCost` with its source. Use `unknown` when the operator cannot confirm a value. The actual observations must match the approved intents before marking inputs verified or before any future paid automation. Recording a manual observation does not make it an automated attestation.
+Store `observedModel`, `modelObservedAt`, and `modelObservationSource` separately from `requestedModel`. `controlObservations` records each applicable control's actual value or `unknown`, observation time/source, and whether it was set, cleared, absent, or unresolved. Record `observedAttachments` and their absence/source/time, plus `expectedCreditCost` with its source. This includes Variety, Max Mode, and any currently applicable advanced controls; do not silently inherit previous form state. A newly encountered control missing from the inventory makes the package stale. The actual observations must match approved intents, and unsupported attachments must be absent, before marking inputs verified or before any future paid automation. Recording a manual observation does not make it an automated attestation.
 
 ## Independent state axes
 
@@ -26,5 +28,6 @@ An authorized automation adapter may add `confirmedSubmittedModel`, `confirmedIn
 
 - Never infer submission, provider completion, or listening review from a prepared package alone.
 - Never infer selected model from `requestedModel`, catalogue documentation, or Suno's last-used preference.
+- Never treat finished lyrics in Simple Mode, unknown input-affecting controls, or retained unsupported attachments as input-verified.
 - Never automatically retry `submitted_unconfirmed` or `uncertain`.
 - Never treat a direct CDN fetch as a permitted Suno download.
