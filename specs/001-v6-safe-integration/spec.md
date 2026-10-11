@@ -5,6 +5,13 @@
 **Status:** Proposed; no live-use approval  
 **Created:** 2026-10-11
 
+## Clarifications — 2026-10-11
+
+- The first release imports the WRBG console's existing `finishedSong` JSON export. Manually entered title/style/lyrics and description-led Simple Mode are outside its acceptance path. A ready export is prepared input, not evidence of Suno submission or operator approval.
+- Phase 1 is implementation, not a release. Release 1 follows the assurance and licensing gate in Phase 2.
+- A manual input-verification claim requires a form-state snapshot before the operator's Create click; later observations cannot establish what was submitted.
+- The Create-control inventory has a versioned contract and refresh triggers. Provider-state observations retain source, time, and history per output.
+
 ## Purpose
 
 Make the fork useful for preparing and tracking Suno V6 song runs without claiming that an obsolete model, an unverified browser state, or an uncertain generation succeeded. The first usable release prepares a reviewed handoff for Suno's own Create and download interfaces. Programmatic submission and download require a separately documented, authorized path.
@@ -29,13 +36,14 @@ As a creator, I can prepare exact title, lyrics, style, instrumental intent, req
 5. Given Variety or Max Mode is unavailable or its effect is unknown, when I prepare a run, then the setting is marked unresolved; the package does not claim exact style control or a known credit cost.
 6. Given a finished lyric, when I prepare a run, then `mode` is `custom` and the complete text occupies the lyrics field; a `simple` mode package is rejected for that intent. Description-led Simple Mode uses a separate prompt field and intent, and is not described as preserving supplied lyrics or as verified in the first release.
 7. Given a Create control or retained attachment that may affect the output but is not represented in the package, when I prepare a run, then it is recorded as unresolved and input verification remains unavailable until the control is explicitly set or cleared and unsupported attachments are absent. The first release does not hand off multimodal attachments.
+8. Given the WRBG console's `schemaVersion: 1`, `purpose: finishedSong` JSON export, when I import it, then the exact `fields.title`, `fields.style`, and `fields.lyrics` become a prepared package only if `ready: true` and `status: preparedForManualHandoff`. `blockedDraft`, malformed, or inconsistent exports are rejected without changing existing records. A missing saved `draft.revisionId` is recorded as unknown, without claiming a saved revision; the export digest identifies the imported snapshot.
 
 ### US2 — Perform a supervised handoff (P1)
 
 As a creator, I can copy reviewed fields into Suno, use its own controls to select a model and submit, and record the resulting song links without the MCP spending credits.
 
 1. Given a prepared package, when I start handoff, then I see its exact fields, requested model, applicable control intents, source revision/hash, and a checklist of values and expected credit cost to confirm in Suno before clicking Create.
-2. Given the Suno Create form, when I confirm the handoff, then the actual selected model and every applicable input-affecting control, including Variety and Max Mode when present, are recorded separately from requested values with time and observation source. Unknown controls or retained attachments block an input-verified claim.
+2. Given the Suno Create form, before I click Create, when I confirm the handoff, then the actual selected model and every applicable input-affecting control, including Variety and Max Mode when present, are recorded in a pre-submit snapshot with time and observation source. Unknown controls or retained attachments block an input-verified claim. A changed form after the snapshot requires fresh confirmation.
 3. Given an observed song ID/link, when I record it, then it is associated with the exact prepared package with its observation source; provider completion and musical review remain separate per output.
 4. Given no ID or a failed/ambiguous submission, when I record the outcome, then the submission is `submitted_unconfirmed`, `uncertain`, or `failed`, never successful with an empty ID list.
 5. Given a download, when I record it, then I record whether it came through a Suno-provided download channel; the MCP does not fetch a CDN URL.
@@ -53,9 +61,9 @@ As a creator, if Suno provides an authorized integration path, I can request one
 
 - **FR-001:** The MCP MUST have a current, evidenced V6 model catalogue and Create-control inventory, and MUST distinguish requested, observed, and unknown models and control values.
 - **FR-002:** The first release MUST NOT expose any working legacy provider-backed tool, including generation, credits, status, recent-song reads, waiting, or direct download. Legacy tool names MUST fail safely or be removed with migration guidance until an operation-specific positive service-access disposition exists.
-- **FR-003:** A package MUST preserve exact applicable text fields (title, lyrics, style, or description), instrumental intent, requested model, intent type, mode, applicable Create-control intents, source revision/hash, control-inventory version, and creation time; credentials MUST NOT be stored in it. Finished-lyric intent MUST use Custom Mode, while description-led Simple Mode MUST NOT claim lyric preservation.
-- **FR-004:** The handoff MUST show exact fields, applicable control intents, and expected credit cost; validate known limits; record actual selected model, every applicable input-affecting control, and retained-attachment disposition separately; and require fresh review after any field, control inventory, or source revision changes. Unknown controls or unsupported attachments prevent input verification.
-- **FR-005:** A run record MUST separate submission state, per-output provider state and ID provenance, and per-output listening review. It MUST NOT infer completion or audio review from a prepared package or metadata alone.
+- **FR-003:** The first release MUST import the existing WRBG console `finishedSong` JSON using `contracts/wrbg-console-import.md`, preserving its exact title, lyrics, style, draft identity, optional saved revision, and export digest. A prepared package MUST preserve exact applicable text fields, instrumental intent, requested model, intent type, mode, applicable Create-control intents, source revision/hash, control-inventory version, and creation time; credentials MUST NOT be stored in it. Finished-lyric intent MUST use Custom Mode, while description-led Simple Mode MUST NOT claim lyric preservation.
+- **FR-004:** The handoff MUST show exact fields, applicable control intents, and expected credit cost; validate known limits; capture actual selected model, every applicable input-affecting control, and retained-attachment disposition in a pre-submit snapshot; and require fresh review after any field, form, control inventory, or source revision changes. Unknown controls or unsupported attachments prevent input verification.
+- **FR-005:** A run record MUST separate submission state, per-output provider state and ID provenance, and per-output listening review. Each provider-state observation MUST carry source and time. It MUST NOT infer completion or audio review from a prepared package or metadata alone.
 - **FR-006:** Any later paid action MUST require positive service-access disposition, exact input/model/applicable-control readback, no unsupported retained attachments, confirmed expected credit cost, single-action protection, confirmed IDs or an uncertain state, and no automatic retry.
 - **FR-007:** Any later browser integration MUST use a dedicated profile, loopback-only CDP, exact Suno origin and tab checks, bounded operations, and no token logging.
 - **FR-008:** Any later authorized file download MUST use the authorized channel and a confined destination with size/type checks and no silent overwrite.
@@ -66,19 +74,20 @@ As a creator, if Suno provides an authorized integration path, I can request one
 
 - V6's multimodal editing, Voices, Custom Models, My Taste, Studio, remastering, and commercial-rights determinations.
 - Description-led Simple Mode handoff until its V6 form behavior is separately observed and accepted.
+- Standalone manual entry of title, style, and lyrics; the first release imports the console's existing JSON export.
 - Automated generation or downloading by replaying the current fork's Clerk token or using its hCaptcha/CDP click path.
 - A claim that prepared inputs produced a particular sound without listening evidence.
 
 ## Success criteria
 
 - **SC-001:** Every advertised model maps to the current Suno model list, and every applicable Create control has an evidenced disposition; no generation request defaults to a retired model or silently inherits an unreviewed control.
-- **SC-002:** Exact reviewed fields and control intents survive prepare/export/import with no silent truncation; an altered revision or control inventory invalidates approval. Finished lyrics cannot be packaged as Simple Mode.
+- **SC-002:** The existing WRBG console `finishedSong` JSON imports with exact title/style/lyrics and provenance, and reviewed fields/control intents survive prepare/export/import with no silent truncation. An altered export, revision, or control inventory invalidates approval. Blocked drafts and finished lyrics in Simple Mode cannot be packaged as ready.
 - **SC-003:** The first release can complete a manual handoff and record an observed ID without any MCP provider-backed request, paid action, or direct CDN request.
 - **SC-004:** No path reports generation success with zero confirmed IDs, treats `streaming` as complete, loses provider state after listening review, or automatically retries an uncertain paid action.
-- **SC-005:** A release record shows disposition of licensing, dependency findings, service access, and all required checks. Missing evidence leaves its gate open.
+- **SC-005:** Before the first release, a release record shows disposition of licensing, dependency findings, service access, and all required checks. Missing evidence leaves its gate open.
 
 ## Open decisions
 
 - Which Suno-provided channel, if any, authorizes programmatic generation and download for this account? Current terms and the fork do not establish one.
 - Whether a later automation release is needed after supervised handoff is in use.
-- Which WRBG console export format should be accepted first; preserve the current console's exact revision and style limit when integrating.
+- Whether standalone manual entry or description-led Simple Mode should be added after the console JSON import is accepted.
