@@ -39,3 +39,7 @@ The prior SkillSpector static scan scored 27/100 (medium caution) with partial c
 2. Written service-access disposition for each proposed generation, status, and download channel.
 3. Dependency and license review with current lockfile and upstream provenance.
 4. Mocked tool-contract and failure-path results; any later live paid trial requires an explicit operator action and a record of input, selected model, credit delta, IDs, and outcome.
+
+## WRBG console import decision
+
+The operator selected the existing WRBG console `finishedSong` JSON export as the first-release input. The current console export in `wrbg-console/src/main.jsx` has `schemaVersion: 1`, `purpose: finishedSong`, `status` (`preparedForManualHandoff` or `blockedDraft`), `draft`, and compiled `fields`/`ready`; `docs/wrbg-2.0/compiler/finished-track.mjs` emits exact `fields.title`, `fields.style`, and `fields.lyrics`. A ready export may contain an unsaved draft with no `revisionId`, so the importer must retain that uncertainty and identify the actual exported bytes by digest. The detailed boundary is in `contracts/wrbg-console-import.md`. This source-code observation does not verify a live Suno handoff.
