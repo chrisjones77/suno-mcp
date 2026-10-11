@@ -9,11 +9,13 @@
 - `src/index.js:55-58,79-82,201-227` advertises `chirp-v4` defaults and forwards a model argument. `src/suno-client.js:356-361` discards that argument. Thus the tool contract cannot select or attest to V6. It might inherit the browser's current model if the old automation still works; this has not been tested.
 - `src/suno-client.js:190-252` relies on text matching, textarea selectors, and private React fiber props. Current V6 form structure and field limits remain unverified. The older style `maxlength=1000` selector is an implementation assumption, not current provider evidence.
 - Suno's [V6 FAQ](https://help.suno.com/en/articles/13924481) says older models are retired for new generations. Remove old-model options rather than translating model names speculatively.
+- The same V6 FAQ says Variety adjusts style prompts and Max Mode costs additional credits. A requested model and exact field strings alone are insufficient to attest to the submitted creative inputs or paid cost; record and confirm both controls.
 
 ## Service and rights gate
 
 - [Suno Terms of Service](https://suno.com/terms-of-service), sections on prohibited uses and permitted downloads, restrict robots/scraping and prohibit obtaining copies outside Suno-provided download channels. This is a product and contractual gate, not a finding that an officially authorized API can never exist. Confirm the applicable route before enabling automation.
 - `src/suno-client.js:45-105` extracts a Clerk session token from the active browser and calls `studio-api.prod.suno.com`; this is not an OAuth grant to the MCP. `src/suno-client.js:118-329` uses CDP to click Generate, including a trusted-click workaround for hCaptcha. `src/suno-client.js:405-442` fetches a CDN MP3 directly. Exclude these paths from the first release.
+- `src/index.js:23-31,89-135` also exposes credits, status, wait, and recent-song tools; `src/suno-client.js:364-402` implements them through the same internal API and browser token. Disabling only generation and download would leave the first release using that route.
 
 ## Correctness and security findings
 
