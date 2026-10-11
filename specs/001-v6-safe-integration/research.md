@@ -10,6 +10,8 @@
 - `src/suno-client.js:190-252` relies on text matching, textarea selectors, and private React fiber props. Current V6 form structure and field limits remain unverified. The older style `maxlength=1000` selector is an implementation assumption, not current provider evidence.
 - Suno's [V6 FAQ](https://help.suno.com/en/articles/13924481) says older models are retired for new generations. Remove old-model options rather than translating model names speculatively.
 - The same V6 FAQ says Variety adjusts style prompts and Max Mode costs additional credits. A requested model and exact field strings alone are insufficient to attest to the submitted creative inputs or paid cost; record and confirm both controls.
+- Suno's [own-lyrics guide](https://help.suno.com/en/articles/2415873) directs creators to Custom Mode for supplied lyrics. A finished-lyric package handed to Simple Mode would change the meaning of that text; the first release must reject that mode/intent combination.
+- Suno also documents [Vocal Gender](https://help.suno.com/en/articles/10153473), [Exclude](https://help.suno.com/en/articles/3161921), and [creative sliders](https://help.suno.com/en/articles/6141377) in Create workflows. Which controls remain present and applicable in the current V6 form needs read-only observation. Inventory and disposition every input-affecting control and retained attachment rather than assuming the named list is exhaustive.
 
 ## Service and rights gate
 
