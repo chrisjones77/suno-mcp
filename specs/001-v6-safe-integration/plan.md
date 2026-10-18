@@ -6,11 +6,11 @@
 
 ## Design
 
-Keep the MCP as a preparation and evidence adapter first. Separate a pure `prepare` layer from any provider adapter. A prepared package contains exact fields and a source hash, not a browser token. A manual handoff can copy/export it and later attach Suno song IDs and observations. An automation adapter remains absent or disabled until authorized. Do not let a renamed legacy tool reach the current `generateSong` implementation.
+Keep the MCP as a preparation and evidence adapter first. Separate a pure `prepare` layer from any provider adapter. The first input is the WRBG console's existing `finishedSong` JSON export, mapped by `contracts/wrbg-console-import.md`; a prepared package contains exact fields and source/export digests, not a browser token. A manual handoff can copy/export it and later attach Suno song IDs and observations. An automation adapter remains absent or disabled until authorized. Do not let a renamed legacy tool reach the current `generateSong` implementation.
 
 ```text
-WRBG console / MCP caller
-          | exact revision
+WRBG console `finishedSong` JSON
+          | exact fields + export digest; saved revision if present
           v
 validate -> prepared package -> manual Suno handoff -> observed ID -> audio review
           |
@@ -19,21 +19,21 @@ validate -> prepared package -> manual Suno handoff -> observed ID -> audio revi
 
 ## Phase 0 — V6 discovery and contract repair
 
-1. Record Suno's current V6 model family, Create form picker, tier availability, mode semantics, field limits, every applicable input-affecting control, and retained-attachment behavior with dated sources or read-only UI evidence. Include controls such as Vocal Gender, Exclude, creative sliders, Variety, and Max Mode only where the current form actually presents them.
+1. Record Suno's current V6 model family, Create form picker, tier availability, mode semantics, field limits, every applicable input-affecting control, and retained-attachment behavior in the versioned inventory defined by `contracts/create-control-inventory.md`, with dated sources or read-only UI evidence. Include controls such as Vocal Gender, Exclude, creative sliders, Variety, and Max Mode only where the current form actually presents them.
 2. Before publishing a changed model contract, disable every legacy provider-backed tool, including credits, status, wait, recent songs, generation, and download. Remove the `chirp-v4` defaults and retired-model descriptions. Make requested model explicit and record Suno's actual selected model separately, with time and source of observation.
 3. Replace ambiguous generation status text with separate submission, per-output provider, and listening-review states. Define inputs and outputs in `contracts/run-record.md`.
 4. Treat a changed UI or unverified model as a blocked automation state, not a best-effort success.
 
 **Exit:** A reviewer can identify every supported model and applicable Create control, see how unknown/retained state is handled, and see why the fork's old model parameter never selected V6. No retired default remains in the MCP contract.
 
-## Phase 1 — supervised usable release
+## Phase 1 — supervised workflow implementation
 
-1. Implement exact-field package validation, source hash/revision, UTF-16 style counting, intent-to-mode rule (`finished-lyrics` requires Custom), applicable control intents, control-inventory versioning, stale-approval detection, and copy/export. Exclude multimodal attachments from the first release.
-2. Provide a manual handoff checklist for actual model, mode, title, lyrics, style, instrumental, every applicable control, retained-attachment absence, and expected credit cost against Suno's account credit display. An unresolved control or attachment prevents an input-verified claim.
-3. Record observed song IDs/URLs, each output's provider state, and later listening reviews separately. Keep all legacy provider-backed tools disabled with a migration message.
+1. Implement the `contracts/wrbg-console-import.md` mapping and validation for the existing export; then implement exact-field package validation, source/export hash and optional saved revision, UTF-16 style counting, intent-to-mode rule (`finished-lyrics` requires Custom), applicable control intents, control-inventory versioning, stale-approval detection, and copy/export. Reject blocked drafts atomically and exclude multimodal attachments from the first release.
+2. Provide a manual handoff checklist for actual model, mode, title, lyrics, style, instrumental, every applicable control, retained-attachment absence, and expected credit cost against Suno's account credit display. Capture the verified form state immediately before the operator clicks Create; a form change invalidates that snapshot. An unresolved control or attachment prevents an input-verified claim.
+3. Record observed song IDs/URLs, each output's provider-state evidence and time, and later listening reviews separately. Keep all legacy provider-backed tools disabled with a migration message.
 4. Redact raw provider errors and token previews; validate all exposed tool inputs and outputs.
 
-**Exit:** A creator can complete a finished-lyric Custom Mode handoff and attach an observed result without the MCP clicking Generate, using an internal API for reads or writes, or fetching CDN media. Requested and actual form state, submission, provider status, and listening review are visibly distinct.
+**Exit:** The supervised workflow is implemented but is not released until Phase 2 assurance and the release gate pass. It can import an existing ready WRBG console export, complete a finished-lyric Custom Mode handoff, and attach an observed result without the MCP clicking Generate, using an internal API for reads or writes, or fetching CDN media. Requested and actual form state, submission, provider status, and listening review are visibly distinct.
 
 ## Phase 2 — service access and security disposition
 
@@ -41,7 +41,7 @@ validate -> prepared package -> manual Suno handoff -> observed ID -> audio revi
 2. Review lockfile dependencies and vulnerability data; replace the broken test command with a working suite covering the first release.
 3. Specify dedicated browser profile, loopback CDP, exact origin, bounded calls, secret handling, destination confinement, and output validation for any later authorized adapter.
 
-**Exit:** Written gate record with owner, date, evidence, and a positive/negative disposition. An unresolved item blocks only its dependent capability, never silently passes.
+**Exit and Release 1 gate:** Written gate record with owner, date, evidence, and a positive/negative disposition. Release the supervised workflow only after Phase 1 acceptance and licensing, dependency review, working checks, and all applicable first-release gates are complete. An unresolved item blocks its dependent capability and never silently passes.
 
 ## Phase 3 — conditional automation
 

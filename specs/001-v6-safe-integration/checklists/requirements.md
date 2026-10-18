@@ -11,6 +11,8 @@
 - [x] Submission, per-output provider status, and listening review are independent.
 - [x] Finished lyrics require Custom Mode; Simple Mode is a separate description intent.
 - [x] Current Create controls and retained attachments require an inventory, observation, and explicit disposition.
+- [x] First-release input is the existing WRBG console `finishedSong` JSON export; blocked and unsaved provenance are distinguished.
+- [x] Release follows assurance, and pre-click and provider-state evidence are required.
 - [x] Requirements map to ordered tasks and measurable success criteria.
 - [ ] Current V6 form and limits have been observed and recorded.
 - [ ] Service-access disposition has been resolved.
