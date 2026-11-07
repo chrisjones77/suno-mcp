@@ -48,3 +48,16 @@ test('unknown context is never executed or copied into prepared fields', () => {
   const s=fixture();s.token='SECRET_SENTINEL';s.canonicalStyle={url:'http://localhost/execute'};
   const p=run(s);assert.doesNotMatch(JSON.stringify(p),/SECRET_SENTINEL|localhost/);
 });
+
+test('export timestamp preserves valid UTC evidence and leaves absence unknown', () => {
+  for(const value of [undefined,null,'2026-11-06T12:00:00.000Z']) {
+    const s=fixture();s.exportedAt=value;assert.equal(run(s).upstream.exportedAt,value ?? null);
+  }
+});
+test('invalid and calendar-normalized export timestamps are rejected without disclosure', () => {
+  for(const value of ['not a date','2026-02-30T12:00:00.000Z','2026-11-06','2026-11-06T25:00:00.000Z']) {
+    const s=fixture();s.exportedAt=value;
+    const r=callTool('suno_prepare_console_export',{exportJson:JSON.stringify(s)});
+    assert.equal(r.isError,true);assert.deepEqual(JSON.parse(r.content[0].text),{code:'INVALID_PROVENANCE'});
+  }
+});

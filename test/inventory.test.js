@@ -38,8 +38,8 @@ for(const [label,change] of [
  const f=fixture(),r={...f.inventory.pages[0].records[0]};change(r);f.inventory.pages[0].records.push(r);const p=run(f);
  assert.equal(p.rows[0].observations.length,2);assert.equal(p.rows[0].catalogueMatch,true);assert.deepEqual(p.proposedMoves,[]);
 });
-test('unknown observation does not erase known evidence',()=>{
- const f=fixture();f.inventory.pages[0].records.push({...f.inventory.pages[0].records[0],publication:'unknown'});const p=run(f);assert.equal(p.rows[0].publication,'private');assert.equal(p.rows[0].observations.length,2);
+test('unknown observation remains unknown in aggregate without discarding known evidence',()=>{
+ const f=fixture();f.inventory.pages[0].records.push({...f.inventory.pages[0].records[0],publication:'unknown'});const p=run(f);assert.equal(p.rows[0].publication,'unknown');assert.equal(p.rows[0].observations.length,2);assert.equal(p.rows[0].observations[0].publication,'private');assert.equal(p.rows[0].classification,'catalogued_release');
 });
 test('no destination and already placed recordings produce no move',()=>{
  const f=fixture();f.destinationWorkspaceId=null;assert.deepEqual(run(f).proposedMoves,[]);f.destinationWorkspaceId='default';assert.deepEqual(run(f).proposedMoves,[]);
@@ -63,4 +63,26 @@ test('bounded input, no argument reflection, and immutable caller object',()=>{
  for(const args of [{inputJson:'SECRET_SENTINEL'},{inputJson:' '.repeat(10*1024*1024+1)},{inputJson:JSON.stringify(fixture()),apply:true}]){const r=callTool('suno_reconcile_inventory',args);assert.equal(r.isError,true);assert.doesNotMatch(JSON.stringify(r),/SECRET_SENTINEL/);}
  const f=fixture(),before=JSON.stringify(f);run(f);assert.equal(JSON.stringify(f),before);
  assert.equal(callTool('suno_apply_moves',{}).isError,true);
+});
+
+test('public plus unknown cannot authorize a proposal based only on public status, in either order',()=>{
+ for(const reverse of [false,true]) {
+  const f=fixture();f.catalogue.recordingIds=[];
+  const r=f.inventory.pages[0].records[0];r.publication='public';
+  f.inventory.pages[0].records.push({...r,publication:'unknown'});
+  if(reverse)f.inventory.pages[0].records.reverse();
+  const p=run(f);assert.equal(p.rows[0].publication,'unknown');assert.equal(p.rows[0].classification,'unclassified');assert.deepEqual(p.proposedMoves,[]);
+ }
+});
+test('blank provenance and workspace identifiers are invalid',()=>{
+ for(const change of [f=>f.inventory.source=' ', f=>f.catalogue.revision='\t', f=>f.inventory.workspaces[0].id=' ']) {
+  const f=fixture();change(f);assert.throws(()=>run(f),/INVALID_INVENTORY_INPUT/);
+ }
+});
+
+test('plan identity binds reconciliation semantics, not only source bytes',()=>{
+ const p=run(fixture());assert.equal(p.reconciliationVersion,'offline-reconcile-v2');
+ assert.notEqual(p.planId,`sha256:${p.inputSha256}`);
+ const expected=require('node:crypto').createHash('sha256').update(JSON.stringify([p.reconciliationVersion,p.inputSha256])).digest('hex');
+ assert.equal(p.planId,`sha256:${expected}`);
 });

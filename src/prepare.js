@@ -11,6 +11,15 @@ function optional(v) {
   if (!text(v) || v.length > 1024 || !v.isWellFormed()) reject('INVALID_PROVENANCE');
   return v;
 }
+function optionalTimestamp(value) {
+  const supplied = optional(value);
+  if (supplied === null) return null;
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(supplied) ||
+      !Number.isFinite(Date.parse(supplied)) || new Date(supplied).toISOString() !== supplied) {
+    reject('INVALID_PROVENANCE');
+  }
+  return supplied;
+}
 function prepare(args) {
   if (!object(args) || Object.keys(args).some(k => k !== 'exportJson') || typeof args.exportJson !== 'string') reject('INVALID_ARGUMENTS');
   const raw = args.exportJson;
@@ -40,7 +49,7 @@ function prepare(args) {
     requestedModel: 'unresolved', modelCatalogSource: null,
     controlInventoryVersion: 'unresolved', controlIntents: {}, attachmentIntent: 'none',
     upstream: { draftId: optional(source.draft.id), savedRevisionId: optional(source.draft.revisionId),
-      exportedAt: optional(source.exportedAt), savedRevisionEquivalence: 'unverified' },
+      exportedAt: optionalTimestamp(source.exportedAt), savedRevisionEquivalence: 'unverified' },
     utf16Lengths: Object.fromEntries(Object.entries(fields).map(([k,v]) => [k,v.length])),
     inputVerified: false, submissionState: 'prepared', outputs: [],
     gates: ['control_inventory_unresolved', 'provider_limits_unverified', 'model_and_controls_unresolved',

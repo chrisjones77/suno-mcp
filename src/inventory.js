@@ -1,9 +1,10 @@
 'use strict';
 const { createHash } = require('node:crypto');
 const { InputError, MAX_BYTES } = require('./prepare.js');
+const RECONCILIATION_VERSION = 'offline-reconcile-v2';
 const hash = s => createHash('sha256').update(s).digest('hex');
 const obj = x => x !== null && typeof x === 'object' && !Array.isArray(x);
-const str = x => typeof x === 'string' && x.length > 0 && x.length <= 1024 && x.isWellFormed();
+const str = x => typeof x === 'string' && x.trim().length > 0 && x.length <= 1024 && x.isWellFormed();
 const id = x => typeof x === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(x);
 function fail() { throw new InputError('INVALID_INVENTORY_INPUT'); }
 function keys(x, allowed) { if (!obj(x) || Object.keys(x).some(k => !allowed.includes(k))) fail(); }
@@ -56,7 +57,9 @@ function reconcile(args) {
     const conflicts=[];
     if(locations.length>1)conflicts.push('workspace_conflict');
     if(publications.includes('public')&&publications.includes('private'))conflicts.push('publication_conflict');
-    const publication=conflicts.includes('publication_conflict')?'unknown':publications.includes('public')?'public':publications.includes('private')?'private':'unknown';
+    // Unknown evidence cannot be promoted to a definite publication status.
+    const publication=conflicts.includes('publication_conflict') || publications.includes('unknown')
+      ? 'unknown' : publications.includes('public') ? 'public' : 'private';
     const catalogued=releases.has(recordingId);
     const classification=catalogued?(publication==='public'?'catalogued_and_public':'catalogued_release'):(publication==='public'?'public_on_suno':'unclassified');
     const reasons=[];
@@ -72,7 +75,8 @@ function reconcile(args) {
       reason:classification,preconditions:{inputSha256,catalogueRevision:cat.revision,observedAt:inv.observedAt,
         expectedWorkspaceId:locations[0],expectedPublication:publication,requireFreshLiveVerification:true}});
   }
-  return {schemaVersion:1,mode:'dry_run',inputSha256,planId:`sha256:${inputSha256}`,
+  return {schemaVersion:1,mode:'dry_run',inputSha256,reconciliationVersion:RECONCILIATION_VERSION,
+    planId:`sha256:${hash(JSON.stringify([RECONCILIATION_VERSION,inputSha256]))}`,
     provenance:{inventorySource:inv.source,observedAt:inv.observedAt,catalogueSource:cat.source,catalogueRevision:cat.revision},
     coverage:{status:issues.length?'incomplete':'declared_complete',liveVerified:false,issues,
       suppliedRows:count,uniqueRecordings:records.size,duplicateRows:count-records.size,expectedCount:inv.expectedCount},

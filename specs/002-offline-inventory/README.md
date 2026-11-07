@@ -34,7 +34,7 @@ Bounds: 10 MiB UTF-8 JSON input, 10,000 supplied recording rows, 10,000 catalogu
 
 Private is not synonymous with unreleased or experimental. Missing catalogue membership does not prove absence from other releases. Catalogue IDs absent from the supplied inventory are reported separately, never declared missing from the account or proposed for moves. Listening verdict is always unassessed.
 
-Duplicate IDs consolidate into one row while retaining every observation and all title variants. Public/private conflict yields unknown aggregate publication and an explicit conflict; disagreement is not settled by order. An unknown observation does not erase a supplied known publication value, but the original unknown remains in observations. Distinct workspace observations (including a known location plus null) are unresolved. A title variant never merges distinct IDs.
+Duplicate IDs consolidate into one row while retaining every observation and all title variants. Public/private conflict yields unknown aggregate publication and an explicit conflict; disagreement is not settled by order. Any unknown publication observation keeps aggregate publication unknown; all supplied known and unknown observations remain available. A catalogue match can still independently establish catalogue release evidence, but a public-plus-unknown mixture without a catalogue match stays unclassified and receives no proposal. Distinct workspace observations (including a known location plus null) are unresolved. A title variant never merges distinct IDs.
 
 ## Coverage and proposed moves
 
@@ -44,11 +44,11 @@ Incomplete coverage holds **all** move proposals. In a declared-complete snapsho
 
 Each proposal includes exact recording/source/destination IDs, reason, input digest, catalogue revision, observation time, expected source workspace/publication and `requireFreshLiveVerification: true`. It is a review candidate only. No command, approval token, executable action or permission to mutate is produced. Human review and a separately authorized future executor would have to recheck live state, resolve drift, and record individual results. appliedMoves is always empty.
 
-inputSha256 hashes the exact inputJson UTF-8 bytes; planId is `sha256:<inputSha256>`. A destination, source, catalogue or whitespace change changes identity. Repeating identical input returns the same plan. Hashes identify content, not authenticity or permission.
+inputSha256 hashes the exact inputJson UTF-8 bytes; reconciliationVersion is `offline-reconcile-v2`; planId is `sha256:` followed by SHA-256 of UTF-8 JSON.stringify(`[reconciliationVersion, inputSha256]`). This supersedes the initial input-only plan identity, so the conservative unknown-status fix cannot silently reuse an old plan ID. Any future change to classification or move semantics must bump reconciliationVersion. A destination, source, catalogue or whitespace change changes identity. Repeating identical input returns the same plan. Hashes identify content, not authenticity or permission.
 
 ## Verification and limits
 
-62 tests passed at this implementation checkpoint, including synthetic exact-ID/alternate-title cases, duplicate/conflicting observations, page/count failures, bounds/errors, unchanged inputs, legacy disablement, and real MCP stdio invocation. `git diff --check` passed. Tests use invented IDs and lyrics; no private catalogue or browser inventory was copied into this repository.
+67 tests passed after the PR review fixes, including synthetic exact-ID/alternate-title cases, duplicate/conflicting observations, page/count failures, bounds/errors, unchanged inputs, legacy disablement, and real MCP stdio invocation. `git diff --check` passed. Tests use invented IDs and lyrics; no private catalogue or browser inventory was copied into this repository.
 
 Owner: Chris for interpretation of catalogue release evidence and any later live authorization; lead for implementation correctness. Interim protection: no apply function and disabled legacy adapters. Revisit on input contract changes, before adding collection/execution, or when an actual source snapshot reveals new pagination semantics. The earlier partial browser scan is not this feature's dataset or acceptance evidence.
 
