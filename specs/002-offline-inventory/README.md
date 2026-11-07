@@ -53,3 +53,11 @@ inputSha256 hashes the exact inputJson UTF-8 bytes; reconciliationVersion is `of
 Owner: Chris for interpretation of catalogue release evidence and any later live authorization; lead for implementation correctness. Interim protection: no apply function and disabled legacy adapters. Revisit on input contract changes, before adding collection/execution, or when an actual source snapshot reveals new pagination semantics. The earlier partial browser scan is not this feature's dataset or acceptance evidence.
 
 Live collection, real library reconciliation, musical discovery/listening, move execution, and full Spec001 handoff remain outside this completed offline slice.
+
+## Local review report continuation
+
+Owner authorized continued offline organizer development on 2026-11-06. UWH primary build (0x1), companion verify (0xB); lead implementation with no dispatched executor. Scope: local stdin CLI and static HTML presentation of the existing reconciler. No classification semantics or plan version changes. No live collection, persisted listening judgments, execution, or release-gate closure.
+
+`src/organize.js --html|--json` validates supplied UTF-8 input and emits a static review report or unchanged reconciliation JSON. `src/report.js` renders only a newly reconciled input, escapes metadata, and blocks external resources through a restrictive content security policy. The report preserves observations and distinguishes declared coverage from live completeness. Users choose private output paths via shell redirection; the CLI itself opens no files and performs no network operations.
+
+Verification: all 72 tests passed, including five report/CLI cases covering metadata injection, incomplete coverage, exact plan equivalence, invalid UTF-8/oversized/private malformed input rejection, and standalone HTML invocation. Human usability acceptance and actual workspace reconciliation remain pending.
