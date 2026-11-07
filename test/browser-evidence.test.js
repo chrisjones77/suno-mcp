@@ -58,3 +58,15 @@ test('missing controls or navigation while reading reject instead of producing a
 test('contradictory publication controls stay unknown',()=>{
  const c=capture();c.rows[0].buttons=['Publish clip','Unpublish clip'];assert.equal(collect([c],opts).inventory.pages[0].records[0].publication,'unknown');
 });
+test('collector output stays inside the existing reconciler page and observation limits',()=>{
+ const id=n=>`${n.toString(16).padStart(8,'0')}-0000-4000-8000-000000000000`;
+ const windows=Array.from({length:501},(_,i)=>capture({captureId:id(i+1),previousCaptureId:i?id(i):null,rows:[]}));
+ assert.throws(()=>collect(windows,opts));
+ const rows=Array.from({length:1000},()=>capture().rows[0]);
+ assert.throws(()=>collect(windows.slice(0,11).map(c=>({...c,rows})),opts));
+});
+test('blank captured titles become unknown rather than incompatible reconciliation input',()=>{
+ const c=capture();c.rows[0].title='  ';
+ const result=collect([c],opts);assert.equal(result.inventory.pages[0].records[0].title,null);
+ assert.doesNotThrow(()=>reconcile({inputJson:JSON.stringify({schemaVersion:1,inventory:result.inventory,catalogue:{source:'synthetic',revision:'v1',recordingIds:[]},destinationWorkspaceId:null})}));
+});

@@ -79,3 +79,22 @@ test('linked parent rejected before creating any journal',t=>{
  const dir=temp(t),parent=path.dirname(dir),link=parent+'-link';fs.symlinkSync(parent,link);t.after(()=>fs.unlinkSync(link));
  assert.throws(()=>initLedger(path.join(link,'new-ledger'),plan()));assert.equal(fs.existsSync(path.join(parent,'new-ledger')),false);
 });
+test('capture identity is immutable across verification events, not just within one batch',()=>{
+ let s=createState(plan());s=append(s,intent(s));s=append(s,{...intent(s),batchId:D,ids:[B]});s=append(s,verified(s));
+ assert.throws(()=>append(s,{...verified(s),batchId:D,captures:[destination([B])]}));
+ assert.doesNotThrow(()=>append(s,{...verified(s),batchId:D,captures:[destination([B],{captureId:B})]}));
+});
+test('invalid aggregate capture append leaves the last checkpoint loadable',t=>{
+ const dir=temp(t);initCaptureStore(dir,{schemaVersion:1,workspaceId:'default',workspaceName:'Synthetic',expectedCount:10000});
+ const id=n=>`${n.toString(16).padStart(8,'0')}-0000-4000-8000-000000000000`;
+ for(let i=0;i<10;i++)recordCapture(dir,capture({captureId:id(i+1),previousCaptureId:i?id(i):null,rows:Array.from({length:1000},(_,j)=>({...capture().rows[0],id:id(1000*i+j+1)}))}));
+ const files=fs.readdirSync(dir);
+ assert.throws(()=>recordCapture(dir,capture({captureId:id(11),previousCaptureId:id(10),rows:[{...capture().rows[0],id:id(10001)}]})));
+ assert.deepEqual(fs.readdirSync(dir),files);assert.equal(loadCaptures(dir).captures.length,10);
+});
+test('nonregular evidence files reject promptly rather than blocking journal recovery',t=>{
+ const {spawnSync}=require('node:child_process');const dir=temp(t);initLedger(dir,plan());
+ const fifo=path.join(dir,'000001.json');assert.equal(spawnSync('mkfifo',['-m','600',fifo]).status,0);
+ const result=spawnSync(process.execPath,['src/browser-workflow.js','ledger-status',dir],{cwd:path.resolve(__dirname,'..'),encoding:'utf8',timeout:2000});
+ assert.equal(result.error,undefined);assert.equal(result.status,1);assert.equal(result.stderr,'OFFLINE_BROWSER_WORKFLOW_ERROR\n');
+});

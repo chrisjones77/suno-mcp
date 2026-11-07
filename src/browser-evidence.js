@@ -2,6 +2,7 @@
 // No browser connection is created here. A host may supply an already-authorized
 // CUA tab for this single, read-only visible-DOM capture.
 const { createHash } = require('node:crypto');
+const MAX_CAPTURES = 500, MAX_OBSERVATIONS = 10000;
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const uuid = x => typeof x === 'string' && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(x);
 const workspace = x => x === 'default' || uuid(x);
@@ -19,7 +20,9 @@ function validateCapture(c) {
     keys(r,['id','title','display','buttons']);
     check(uuid(r.id) && (r.title === null || text(r.title)) && text(r.display,16384) && Array.isArray(r.buttons) && r.buttons.length <= 40 && r.buttons.every(b => text(b)));
   }
-  return structuredClone(c);
+  const copy = structuredClone(c);
+  for (const row of copy.rows) if (row.title !== null && !row.title.trim()) row.title = null;
+  return copy;
 }
 async function captureVisible(tab, {captureId, previousCaptureId = null, observedAt}) {
   const url = await tab.url();
@@ -58,6 +61,7 @@ function collect(captures, {workspaceName, expectedCount = null}) {
     else unique.set(c.captureId,c);
   }
   const windows = [...unique.values()], first = windows[0];
+  check(windows.length <= MAX_CAPTURES && windows.reduce((n,c) => n+c.rows.length,0) <= MAX_OBSERVATIONS);
   let previous = null, previousTime = null;
   const ids = new Set(), pages = new Set();
   for (const c of windows) {
@@ -85,4 +89,4 @@ function collect(captures, {workspaceName, expectedCount = null}) {
   return {schemaVersion:1, inventory, captures:windows, evidenceSha256:hash(windows),
     coverage:{status:'incomplete',issues:[...issues].sort(),uniqueRecordings:ids.size,duplicateCaptures},liveOperationsEnabled:false};
 }
-module.exports = {captureVisible, validateCapture, collect, hash, uuid, workspace, time, text, keys, check};
+module.exports = {captureVisible, validateCapture, collect, MAX_CAPTURES, MAX_OBSERVATIONS, hash, uuid, workspace, time, text, keys, check};

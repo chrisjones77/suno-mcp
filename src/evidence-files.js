@@ -14,7 +14,7 @@ function privateDirectory(dir) {
   const s=fs.lstatSync(resolved);check(s.isDirectory() && (s.mode & 0o077)===0 && s.uid===process.getuid());return resolved;
 }
 function readPrivate(file) {
-  const fd=fs.openSync(file,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);
+  const fd=fs.openSync(file,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW|fs.constants.O_NONBLOCK);
   try {const s=fs.fstatSync(fd);check(s.isFile() && s.nlink===1 && s.size<=MAX_FILE && (s.mode&0o077)===0 && s.uid===process.getuid());return JSON.parse(fs.readFileSync(fd,'utf8'));} finally {fs.closeSync(fd);}
 }
 function writeExclusive(file,value) {

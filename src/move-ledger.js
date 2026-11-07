@@ -73,6 +73,8 @@ function transition(state,event) {
     else {
       check(Array.isArray(event.captures));
       check(event.captures.every(c => c.observedAt >= b.lastAt && c.observedAt <= event.at));
+      const priorCaptures=new Map(state.events.filter(e=>e.kind==='verified').flatMap(e=>e.captures.map(c=>[c.captureId,hash(validateCapture(c))])));
+      for(const c of event.captures) check(!priorCaptures.has(c.captureId) || priorCaptures.get(c.captureId)===hash(validateCapture(c)));
       const v=verifyDestination(state.plan,b.ids,event.captures);
       check(!v.missing.length && !v.unexpected.length);
     }
