@@ -78,3 +78,7 @@ Each event is an exclusively created, fsynced sequence file referencing the prec
 Run `npm test`. Synthetic tests cover DOM-only reads, placeholder exclusion, duplicate windows, same-title different IDs, uncertainty propagation into reconciliation, interrupted intent/submission recovery, wrong/stale evidence, copied batch identities, concurrent writers, torn files, altered plans, links and permissions, CLI workflows and continued MCP rejection of live operations. No live browser action or Suno request is required or performed by the test suite.
 
 Outstanding provider/control, licensing, independent acceptance and release gates are unchanged. A future live host smoke test and any executor for moves require their own scope; these tests do not authorize them.
+
+## Authorized read-only MCP follow-up
+
+The original offline scope above is supplemented by [host-bound read-only MCP](readonly-mcp.md), authorized on 2026-11-07. Default stdio remains offline; the opt-in host integration exposes only capture, in-memory checkpoint and reconciliation. No Suno write or move executor is enabled.
