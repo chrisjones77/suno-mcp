@@ -11,7 +11,7 @@ test('real MCP stdio lists tools, imports offline, and refuses every live operat
   const client = new Client({name:'offline-test',version:'1.0.0'});
   try {
     await client.connect(transport);
-    const list=await client.listTools();assert.equal(list.tools.length,8);
+    const list=await client.listTools();assert.equal(list.tools.length,9);
     for (const name of LEGACY_TOOLS) {
       const r=await client.callTool({name,arguments:{}});
       assert.equal(r.isError,true);assert.equal(JSON.parse(r.content[0].text).code,'LIVE_OPERATIONS_DISABLED');
@@ -20,6 +20,8 @@ test('real MCP stdio lists tools, imports offline, and refuses every live operat
     const r=await client.callTool({name:'suno_prepare_console_export',arguments:{exportJson:JSON.stringify(source)}});
     assert.equal(r.isError,false);const p=JSON.parse(r.content[0].text);
     assert.equal(p.lyrics,source.fields.lyrics);assert.equal(p.inputVerified,false);assert.deepEqual(p.outputs,[]);
+    const inventoryResult=await client.callTool({name:'suno_reconcile_inventory',arguments:{inputJson:JSON.stringify({schemaVersion:1,inventory:{source:'synthetic',observedAt:'2026-11-06T12:00:00.000Z',workspaces:[],pages:[{cursor:null,nextCursor:null,status:'ok',records:[]}],expectedCount:0},catalogue:{source:'fixture',revision:'r1',recordingIds:[]},destinationWorkspaceId:null})}});
+    assert.equal(inventoryResult.isError,false);assert.deepEqual(JSON.parse(inventoryResult.content[0].text).appliedMoves,[]);
     const bad=await client.callTool({name:'suno_prepare_console_export',arguments:{exportJson:'SECRET_SENTINEL'}});
     assert.equal(bad.isError,true);assert.doesNotMatch(JSON.stringify(bad),/SECRET_SENTINEL/);
   } finally { await client.close(); }

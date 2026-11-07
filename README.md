@@ -1,6 +1,6 @@
 # Suno MCP — offline foundation
 
-This development build prepares **unverified offline drafts** from the WRBG console's existing finishedSong JSON export. All live Suno operations are disabled. This is not Release 1 and does not inventory or organize a Suno workspace yet.
+This development build prepares **unverified offline drafts** from the WRBG console's existing finishedSong JSON export. All live Suno operations are disabled. It also reconciles supplied offline inventory with a released-recording catalogue and proposes moves. It does not collect a live workspace or apply changes, and is not Release 1.
 
 ## Run
 
@@ -22,13 +22,19 @@ exportSha256 is SHA-256 of the exact UTF-8 exportJson string. sourceRevision is 
 
 packageId is `sha256:<sourceSha256>`. createdAt is creation metadata outside the digest. Any export-byte change changes identity. These hashes identify content; they do not establish approval or authenticity. This subset accepts no approval and cannot reuse a verified handoff.
 
+## Offline inventory tool
+
+`suno_reconcile_inventory` accepts `{ "inputJson": "<normalized snapshot JSON>" }`. It matches exact recording IDs, preserves observation conflicts and unknowns, and produces a dry-run move manifest only. Incomplete pagination or inconsistent totals hold all proposed moves. Private tracks are never automatically called experiments.
+
+Read the [input contract and evidence boundaries](specs/002-offline-inventory/README.md) and [synthetic example](examples/inventory.synthetic.json). Supply an explicit released-recording catalogue revision and destination workspace, or null destination for classification only. There is no live collection or apply tool.
+
 ## Legacy migration
 
 The seven old tool names remain discoverable only to return `LIVE_OPERATIONS_DISABLED`: credits, custom generation, description generation, status, waiting, recent songs and download. Retired model defaults have been removed from the advertised contract. Direct SunoClient construction, CDP import, and every legacy probe/smoke script also fail closed. Prior implementations remain in Git history, not active runtime code. Do not run old revisions to bypass the open gates.
 
 ## Remaining work
 
-See [tasks](specs/001-v6-safe-integration/tasks.md) and [implementation evidence](specs/001-v6-safe-integration/validation/offline-foundation.md). Complete control inventory, provider limits, model/control intent configuration, manual handoff, independent output observations/reviews, service-access disposition and licensing remain open. Workspace inventory/release reconciliation needs its own contract and authorized collection path.
+See [tasks](specs/001-v6-safe-integration/tasks.md) and [implementation evidence](specs/001-v6-safe-integration/validation/offline-foundation.md). Complete control inventory, provider limits, model/control intent configuration, manual handoff, independent output observations/reviews, service-access disposition and licensing remain open. Offline inventory/release reconciliation is implemented separately; live collection still needs an authorized path.
 
 ## License status
 
