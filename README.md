@@ -1,6 +1,6 @@
 # Suno MCP — offline foundation
 
-This development build prepares **unverified offline drafts** from the WRBG console's existing finishedSong JSON export. All live Suno operations are disabled. It also reconciles supplied offline inventory with a released-recording catalogue and proposes moves. It does not collect a live workspace or apply changes, and is not Release 1.
+This development build prepares **unverified offline drafts** from the WRBG console's existing finishedSong JSON export. All live Suno operations are disabled. It also reconciles supplied offline inventory with a released-recording catalogue and proposes moves. The MCP server does not collect a live workspace or apply changes, and is not Release 1. A separate host-supplied, read-only browser capture adapter and offline evidence workflow are available below.
 
 ## Run
 
@@ -28,13 +28,39 @@ packageId is `sha256:<sourceSha256>`. createdAt is creation metadata outside the
 
 Read the [input contract and evidence boundaries](specs/002-offline-inventory/README.md) and [synthetic example](examples/inventory.synthetic.json). Supply an explicit released-recording catalogue revision and destination workspace, or null destination for classification only. There is no live collection or apply tool.
 
+## Local organizer report
+
+Use the organizer directly without starting MCP or connecting to Suno. It accepts the same normalized inventory JSON as the reconciliation tool through standard input and emits a standalone HTML report or the complete JSON plan:
+
+```sh
+node src/organize.js --html < /private/path/input.json > /private/path/review.html
+node src/organize.js --json < /private/path/input.json > /private/path/plan.json
+```
+
+Choose new output filenames: shell redirection can overwrite existing files. Keep input and output outside this repository. Open review.html in a browser to read or print it; it contains no scripts, external resources, forms or live actions. Use browser Find to locate an exact ID or title. The report includes classification totals, every observation, conflicts, coverage issues, proposed moves and catalogue IDs absent from the supplied snapshot. It does not collect metadata or save review decisions.
+
+Input is bounded to 10 MiB and must be valid UTF-8 and valid normalized inventory JSON. Failures emit a fixed error to stderr and no report to stdout. A shell may still create an empty redirected output on failure. The JSON plan preserves the exact supplied input-byte identity. HTML safely escapes all supplied metadata. Set destinationWorkspaceId to null for classification only; proposals require an explicitly selected destination in the input.
+
+## Browser evidence and resumable verification
+
+The standalone [browser evidence workflow](specs/003-browser-evidence/README.md) maintains rendered-DOM capture checkpoints, an offline move-evidence ledger, and exact-ID destination verification. It includes synthetic fixtures and tests for interrupted work, stale/wrong-batch evidence, pagination uncertainty, concurrent writers and damaged journals.
+
+```sh
+node src/browser-workflow.js collect < examples/browser-collection.synthetic.json
+node src/browser-workflow.js verify < examples/destination-verification.synthetic.json
+```
+
+The read-only adapter accepts an already authorized CUA tab; it does not connect to a browser itself. The CLI operates on supplied JSON and private local journal directories. Neither is registered with MCP. There is no move, publish, delete or automatic-retry executor. Intent/submission stays uncertain until destination IDs are observed; account-coverage and release gates remain open. See the linked contract for schemas, journal recovery and host integration limits.
+
+The GitHub Actions offline-test workflow runs the synthetic suite and CLI examples on Node 22/24, on Linux and macOS. It uses no Suno credentials or live workspace data.
+
 ## Legacy migration
 
 The seven old tool names remain discoverable only to return `LIVE_OPERATIONS_DISABLED`: credits, custom generation, description generation, status, waiting, recent songs and download. Retired model defaults have been removed from the advertised contract. Direct SunoClient construction, CDP import, and every legacy probe/smoke script also fail closed. Prior implementations remain in Git history, not active runtime code. Do not run old revisions to bypass the open gates.
 
 ## Remaining work
 
-See [tasks](specs/001-v6-safe-integration/tasks.md) and [implementation evidence](specs/001-v6-safe-integration/validation/offline-foundation.md). Complete control inventory, provider limits, model/control intent configuration, manual handoff, independent output observations/reviews, service-access disposition and licensing remain open. Offline inventory/release reconciliation is implemented separately; live collection still needs an authorized path.
+See [tasks](specs/001-v6-safe-integration/tasks.md) and [implementation evidence](specs/001-v6-safe-integration/validation/offline-foundation.md). Complete control inventory, provider limits, model/control intent configuration, manual handoff, independent output observations/reviews, service-access disposition and licensing remain open. Offline inventory/release reconciliation is implemented separately; live collection still needs a separately authorized host session and compatibility check; no live MCP collection is enabled.
 
 ## License status
 
