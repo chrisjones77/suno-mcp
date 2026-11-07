@@ -1,116 +1,41 @@
-# Suno MCP
+# Suno MCP — offline foundation
 
-An MCP (Model Context Protocol) server for generating music with [Suno](https://suno.com).
+This development build prepares **unverified offline drafts** from the WRBG console's existing finishedSong JSON export. All live Suno operations are disabled. It also reconciles supplied offline inventory with a released-recording catalogue and proposes moves. It does not collect a live workspace or apply changes, and is not Release 1.
 
-## Features
+## Run
 
-- **Generate songs** with custom lyrics and style tags
-- **Generate from description** - let Suno AI write the lyrics
-- **Wait for completion** and get audio URLs with markdown embeds
-- **Download MP3s** to local folders
-- **Auto-refresh tokens** when they expire
+Node.js 22.13+ is required. Run `npm ci --ignore-scripts`, `npm test`, then `npm start` for MCP over stdio. No browser or Suno login is required. No persistent records are written by the server; callers retain returned packages privately.
 
-## Requirements
+## Offline tool
 
-- Node.js 18+
-- [BrowserOS](https://browseros.dev) (or any Chromium with `--remote-debugging-port`) on `http://localhost:9100` with Suno logged in. Override with `CDP_URL`.
-- A Suno account (free or paid)
+`suno_prepare_console_export` accepts `{ "exportJson": "<exact exported JSON text>" }`. The export must have schemaVersion 1, purpose finishedSong, status preparedForManualHandoff, ready true, matching draft/field titles, and nonempty title/style/lyrics. Blocked, malformed, oversized (>10 MiB UTF-8), erroneous and inconsistent exports are rejected atomically. Raw parser errors and supplied arguments are not echoed in failures.
 
-## Installation
+The result preserves exact text, line endings and Unicode, provides UTF-16 counts, export/source digests and optional saved revision, and begins with submissionState prepared and no outputs. Saved-revision equivalence remains unverified. A supplied exportedAt must be a real calendar timestamp in the console’s canonical UTC format (YYYY-MM-DDTHH:mm:ss.sssZ); absent/null remains unknown. Additional source context is not copied or executed. Keep inputs and outputs private; the export may contain unreleased lyrics.
 
-```bash
-npm install
-```
+**Evidence limits:** Current provider field limits are not validated. Model and control inventory remain unresolved; empty controlIntents is an explicit incomplete draft, not complete control coverage. The importer assumes a vocal finished-lyric handoff (instrumental false). It does not accept additional model, control, instrumental or approval arguments. It cannot mark inputs verified, record a verified pre-submit snapshot, submit, observe outputs, or establish listening review. Oversized provider fields are retained for review rather than silently truncated or claimed valid.
 
-## Usage with Claude Code
+### Identity
 
-Add to your `.mcp.json`:
+exportSha256 is SHA-256 of the exact UTF-8 exportJson string. sourceRevision is `sha256:<exportSha256>`. sourceSha256 hashes UTF-8 JSON.stringify of this fixed-order tuple:
 
-```json
-{
-  "suno": {
-    "command": "node",
-    "args": ["/path/to/suno-mcp/src/index.js"]
-  }
-}
-```
+`["suno-prepared-v1", exportSha256, title, style, lyrics, "finished-lyrics", "custom", false, "unresolved", null, "unresolved", {}, "none"]`
 
-## Tools
+packageId is `sha256:<sourceSha256>`. createdAt is creation metadata outside the digest. Any export-byte change changes identity. These hashes identify content; they do not establish approval or authenticity. This subset accepts no approval and cannot reuse a verified handoff.
 
-| Tool | Description |
-|------|-------------|
-| `suno_generate_song` | Generate with custom lyrics and style |
-| `suno_generate_from_description` | AI writes lyrics from a description |
-| `suno_wait_for_songs` | Wait for completion, returns URLs + markdown |
-| `suno_check_status` | Check generation status |
-| `suno_get_credits` | Get account credits info |
-| `suno_get_recent` | List recent songs |
-| `suno_download_song` | Download MP3 to a folder |
+## Offline inventory tool
 
-## How It Works
+`suno_reconcile_inventory` accepts `{ "inputJson": "<normalized snapshot JSON>" }`. It matches exact recording IDs, preserves observation conflicts and unknowns, and produces a dry-run move manifest only. Incomplete pagination or inconsistent totals hold all proposed moves. Private tracks are never automatically called experiments.
 
-### Authentication
-Suno uses Clerk for auth with short-lived JWT tokens. The client calls
-`window.Clerk.session.getToken()` in the live Suno tab via CDP — Clerk handles
-refresh under the hood, so no page reload is needed. The token is cached until
-5 minutes before its `exp` claim.
+Read the [input contract and evidence boundaries](specs/002-offline-inventory/README.md) and [synthetic example](examples/inventory.synthetic.json). Supply an explicit released-recording catalogue revision and destination workspace, or null destination for classification only. There is no live collection or apply tool.
 
-### Song Generation
-Direct API calls fail due to hCaptcha. Rather than scrape form selectors, the
-client drives Suno's own React app:
+## Legacy migration
 
-1. Connect to the Suno tab via CDP; navigate to `/create` if needed.
-2. Walk the React fiber tree from the Create button to find the component that
-   exposes `onCreateClick` / `lyrics` / `styles` / `mode` as props — the semantic
-   generate handler.
-3. Populate lyrics + style textareas using the React-compatible native setter
-   so internal state updates.
-4. Wait until the fiber's props reflect the new values (i.e. React has
-   re-rendered).
-5. Dispatch a trusted mouse click via CDP `Input.dispatchMouseEvent` at the
-   button's coordinates. hCaptcha accepts CDP-synthesized events as real user
-   gestures (calling `onCreateClick()` from JS does not — captcha refuses).
-6. Capture the `/api/generate/v2` response via CDP `Network` events to return
-   the new clip IDs. Falls back to polling `/api/project/default` if the
-   network event is missed.
+The seven old tool names remain discoverable only to return `LIVE_OPERATIONS_DISABLED`: credits, custom generation, description generation, status, waiting, recent songs and download. Retired model defaults have been removed from the advertised contract. Direct SunoClient construction, CDP import, and every legacy probe/smoke script also fail closed. Prior implementations remain in Git history, not active runtime code. Do not run old revisions to bypass the open gates.
 
-This approach is robust to UI redesigns: it depends on semantic React props
-(`onCreateClick`, `lyrics`, `styles`) and the `aria-label="Create song"` button
-— both of which are load-bearing and unlikely to change — rather than on
-class names, textContent matches, or DOM layout.
+## Remaining work
 
-## Example
+See [tasks](specs/001-v6-safe-integration/tasks.md) and [implementation evidence](specs/001-v6-safe-integration/validation/offline-foundation.md). Complete control inventory, provider limits, model/control intent configuration, manual handoff, independent output observations/reviews, service-access disposition and licensing remain open. Offline inventory/release reconciliation is implemented separately; live collection still needs an authorized path.
 
-```javascript
-// Generate a song
-const result = await suno_generate_song({
-  lyrics: "[Verse]\nHello world\n\n[Chorus]\nThis is a test",
-  style: "indie folk, acoustic, male vocals"
-});
+## License status
 
-// Wait for it to complete
-const songs = await suno_wait_for_songs({
-  ids: result.songIds
-});
-
-// Download it
-await suno_download_song({
-  songId: songs[0].id,
-  folder: "./downloads"
-});
-```
-
-## Known Limitations
-
-- Title field doesn't work reliably (Suno UI limitation — not currently wired
-  through the new generate path).
-- `generate_from_description` (simple mode) currently falls back to custom mode
-  if the UI mode toggle isn't found; pass lyrics + style via `generate_song`
-  for deterministic behaviour.
-- Requires BrowserOS with an active, visible Suno session. The Create button
-  must have non-zero size on screen for the trusted click to land.
-- Token expires every ~1 hour (auto-refreshes via Clerk).
-
-## License
-
-MIT
+Unresolved: inherited package metadata says ISC while the prior README said MIT and no license file was supplied. This change does not select a license or resolve upstream permission. Distribution/release remains gated.

@@ -1,21 +1,28 @@
 {
   "name": "suno-mcp",
   "version": "1.0.0",
-  "description": "MCP server for Suno AI music generation",
+  "description": "Offline Suno MCP foundation; live operations disabled",
   "main": "src/index.js",
   "bin": {
     "suno-mcp": "./src/index.js"
   },
   "scripts": {
     "start": "node src/index.js",
-    "test": "node test-api.js"
+    "test": "node --test test/*.test.js"
   },
-  "keywords": ["mcp", "suno", "ai", "music"],
+  "keywords": [
+    "mcp",
+    "suno",
+    "ai",
+    "music"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "ws": "^8.19.0"
+    "@modelcontextprotocol/sdk": "^1.32.2"
+  },
+  "engines": {
+    "node": ">=22.13"
   }
 }
