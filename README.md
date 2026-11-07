@@ -1,6 +1,6 @@
 # Suno MCP — offline foundation
 
-This development build prepares **unverified offline drafts** from the WRBG console's existing finishedSong JSON export. All live Suno operations are disabled. It also reconciles supplied offline inventory with a released-recording catalogue and proposes moves. The MCP server does not collect a live workspace or apply changes, and is not Release 1. A separate host-supplied, read-only browser capture adapter and offline evidence workflow are available below.
+This development build prepares **unverified offline drafts** from the WRBG console's existing finishedSong JSON export. All Suno write operations and legacy API operations are disabled. It also reconciles supplied offline inventory with a released-recording catalogue and proposes moves. The default stdio server remains offline and is not Release 1. An opt-in, host-bound read-only MCP integration can capture the authorized browser’s current rendered window; it never applies changes.
 
 ## Run
 
@@ -26,7 +26,7 @@ packageId is `sha256:<sourceSha256>`. createdAt is creation metadata outside the
 
 `suno_reconcile_inventory` accepts `{ "inputJson": "<normalized snapshot JSON>" }`. It matches exact recording IDs, preserves observation conflicts and unknowns, and produces a dry-run move manifest only. Incomplete pagination or inconsistent totals hold all proposed moves. Private tracks are never automatically called experiments.
 
-Read the [input contract and evidence boundaries](specs/002-offline-inventory/README.md) and [synthetic example](examples/inventory.synthetic.json). Supply an explicit released-recording catalogue revision and destination workspace, or null destination for classification only. There is no live collection or apply tool.
+Read the [input contract and evidence boundaries](specs/002-offline-inventory/README.md) and [synthetic example](examples/inventory.synthetic.json). Supply an explicit released-recording catalogue revision and destination workspace, or null destination for classification only. This offline tool performs no live collection or application.
 
 ## Local organizer report
 
@@ -50,7 +50,7 @@ node src/browser-workflow.js collect < examples/browser-collection.synthetic.jso
 node src/browser-workflow.js verify < examples/destination-verification.synthetic.json
 ```
 
-The read-only adapter accepts an already authorized CUA tab; it does not connect to a browser itself. The CLI operates on supplied JSON and private local journal directories. Neither is registered with MCP. There is no move, publish, delete or automatic-retry executor. Intent/submission stays uncertain until destination IDs are observed; account-coverage and release gates remain open. See the linked contract for schemas, journal recovery and host integration limits.
+The read-only adapter accepts an already authorized CUA tab; it does not connect to a browser itself. The CLI operates on supplied JSON and private local journal directories. The CLI is not registered with MCP. The optional [host-bound read-only MCP integration](specs/003-browser-evidence/readonly-mcp.md) exposes capture, in-memory checkpoint and reconciliation tools. There is no move, publish, delete or automatic-retry executor. Intent/submission stays uncertain until destination IDs are observed; account-coverage and release gates remain open. See the linked contract for schemas, journal recovery and host integration limits.
 
 The GitHub Actions offline-test workflow runs the synthetic suite and CLI examples on Node 22/24, on Linux and macOS. It uses no Suno credentials or live workspace data.
 
@@ -60,7 +60,7 @@ The seven old tool names remain discoverable only to return `LIVE_OPERATIONS_DIS
 
 ## Remaining work
 
-See [tasks](specs/001-v6-safe-integration/tasks.md) and [implementation evidence](specs/001-v6-safe-integration/validation/offline-foundation.md). Complete control inventory, provider limits, model/control intent configuration, manual handoff, independent output observations/reviews, service-access disposition and licensing remain open. Offline inventory/release reconciliation is implemented separately; live collection still needs a separately authorized host session and compatibility check; no live MCP collection is enabled.
+See [tasks](specs/001-v6-safe-integration/tasks.md) and [implementation evidence](specs/001-v6-safe-integration/validation/offline-foundation.md). Complete control inventory, provider limits, model/control intent configuration, manual handoff, independent output observations/reviews, service-access disposition and licensing remain open. Offline inventory/release reconciliation is implemented separately; live collection still needs a separately authorized host session and compatibility check; default stdio live collection remains disabled. The optional host integration has passed a bounded live smoke test; this is not full-account coverage or release acceptance.
 
 ## License status
 
